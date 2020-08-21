@@ -43,7 +43,6 @@ namespace EfSqlEncrypted
             _keyVaultKeyName = configuration["KeyVault:KeyName"];
             _keyVaultKeyVersion = configuration["KeyVault:KeyVersion"];
 
-
             // If this is fill, the secret hasn't been set correctly
             if (_clientId.Equals("FILL") || _clientSecret.Equals("FILL"))
             {
