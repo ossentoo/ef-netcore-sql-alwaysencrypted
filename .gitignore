@@ -1,0 +1,11 @@
+efsqlencrypted/obj/*
+unit.tests/bin/Debug/*
+unit.tests/obj/*
+efsqlencrypted/bin/*
+.vs/*
+unit.tests/efsqlencrypted/obj/*
+unit.tests/appsettings.Development.json
+ef-sql-alwaysencrypted.sln.DotSettings.user
+EfTestConsole/bin/*
+EfTestConsole/obj/*
+EfTestConsole/appsettings.Development.json
