@@ -34,7 +34,7 @@ namespace unit.tests
         }
 
         [Fact]
-        public void ApplyDataMigration()
+        public void ApplyMigrationWithAndAddData()
         {
             using var db = new EfContext();
             db.Database.Migrate();
