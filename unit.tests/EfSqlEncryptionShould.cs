@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Data;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -46,7 +45,7 @@ namespace unit.tests
             using var db = new EfContext();
             AddDataWithSql();
 
-            var entity = db.Patients.FirstOrDefault(x => x.Email == Email);
+            var entity = db.Patients.First(x => x.Email == Email);
              
             Assert.Equal(Email, entity.Email);
             Assert.Equal(Ssn, entity.SSN);
