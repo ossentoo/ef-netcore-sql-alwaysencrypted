@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Data;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
@@ -34,31 +35,41 @@ namespace unit.tests
                 LastName = "Bloggs",
                 BirthDate = new DateTime(1970, 01, 01)
             };
+
+            using var db = new EfContext();
+            db.Database.Migrate();
         }
 
         [Fact]
         public void ApplyMigrationWithAndAddData()
         {
             using var db = new EfContext();
-            db.Database.Migrate();
-            AddDataWithEf();
+            AddDataWithSql();
+
+            var entity = db.Patients.FirstOrDefault(x => x.Email == Email);
+             
+            Assert.Equal(Email, entity.Email);
+            Assert.Equal(Ssn, entity.SSN);
+
         }
 
         [Fact]
-        public async  Task DecryptData()
+        public async  Task AddUpdateAndDecryptData()
         {
             await using var db = new EfContext();
 
             AddDataWithEf();
 
-            var results = await db.Patients.ToListAsync();
+            var entity = await db.Patients.FirstAsync();
+            entity.BirthDate = DateTime.UtcNow.AddYears(-40);
+            await db.SaveChangesAsync();
 
-            foreach (var r in results)
-            {
-                Debug.WriteLine(r.SSN);
-            }
+            var entityUpdated = await db.Patients.FirstAsync();
 
-            Assert.True(results.Any());
+            Assert.True(entityUpdated.BirthDate < DateTime.UtcNow);
+
+            Assert.Equal(Email, entity.Email);
+            Assert.Equal(Ssn, entity.SSN);
         }
 
         private void Initialize()
@@ -88,14 +99,17 @@ namespace unit.tests
 
             var entity = db.Patients.FirstOrDefault(x=>x.Email == Email);
 
-            if (entity == null)
+            if (entity != null)
             {
-                AddDataWithSql();
-                // db.Patients.Add(_patient);
-                // db.SaveChanges();
+                db.Patients.Remove(entity);
+                db.SaveChanges();
             }
+
+            db.Patients.Add(_patient);
+            db.SaveChanges();
+
         }
-        
+
         private void AddDataWithSql()
         {
             SqlProviderBuilder.InitializeAzureKeyVaultProvider();
@@ -104,17 +118,23 @@ namespace unit.tests
 
             sqlConnection.Open();
             using var sqlTransaction = sqlConnection.BeginTransaction();
-            using var sqlCommand = new SqlCommand(insertSql,
+            using var command = new SqlCommand(insertSql,
                 connection: sqlConnection, transaction: sqlTransaction,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
 
-            sqlCommand.Parameters.AddWithValue(@"Email", _patient.Email);
-            sqlCommand.Parameters.AddWithValue(@"SSN", _patient.SSN);
-            sqlCommand.Parameters.AddWithValue(@"FirstName", _patient.FirstName);
-            sqlCommand.Parameters.AddWithValue(@"LastName", _patient.LastName);
-            sqlCommand.Parameters.AddWithValue(@"BirthDate", DateTime.UtcNow);
+            command.Parameters.Add("@Email", SqlDbType.VarChar);
+            command.Parameters.Add("@SSN", SqlDbType.VarChar);
+            command.Parameters.Add("@FirstName", SqlDbType.VarChar);
+            command.Parameters.Add("@LastName", SqlDbType.VarChar);
+            command.Parameters.Add("@BirthDate", SqlDbType.DateTime);
 
-            sqlCommand.ExecuteNonQuery();
+            command.Parameters["@Email"].Value = _patient.Email;
+            command.Parameters["@SSN"].Value = _patient.SSN;
+            command.Parameters["@FirstName"].Value = _patient.FirstName;
+            command.Parameters["@LastName"].Value = _patient.LastName;
+            command.Parameters["@BirthDate"].Value = DateTime.UtcNow;
+
+            command.ExecuteNonQuery();
             sqlTransaction.Commit();
         }
     }

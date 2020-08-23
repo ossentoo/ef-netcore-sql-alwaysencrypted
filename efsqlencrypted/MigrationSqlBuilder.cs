@@ -55,9 +55,9 @@ namespace EfSqlEncrypted
                             COLUMN IF EXISTS LastName,
                             COLUMN IF EXISTS SSN; 
 
-                    ALTER TABLE Patients ADD SSN nvarchar(20) NOT NULL
-                    ALTER TABLE Patients ADD FirstName nvarchar(255) NOT NULL
-                    ALTER TABLE Patients ADD LastName nvarchar(255) NOT NULL";
+                    ALTER TABLE Patients ADD SSN varchar(20) NOT NULL
+                    ALTER TABLE Patients ADD FirstName varchar(255) NOT NULL
+                    ALTER TABLE Patients ADD LastName varchar(255) NOT NULL";
         }
 
         public string PatientsEncryptionAdd()
@@ -69,9 +69,9 @@ namespace EfSqlEncrypted
                             COLUMN IF EXISTS LastName,
                             COLUMN IF EXISTS SSN; 
 
-                    ALTER TABLE Patients ADD SSN nvarchar(20) ENCRYPTED WITH (ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', COLUMN_ENCRYPTION_KEY = {ApplicationName}) NOT NULL
-                    ALTER TABLE Patients ADD FirstName nvarchar(255) ENCRYPTED WITH (ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', COLUMN_ENCRYPTION_KEY = {ApplicationName}) NOT NULL
-                    ALTER TABLE Patients ADD LastName nvarchar(255) ENCRYPTED WITH (ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', COLUMN_ENCRYPTION_KEY = {ApplicationName}) NOT NULL";
+                    ALTER TABLE Patients ADD SSN varchar(20) ENCRYPTED WITH (ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', COLUMN_ENCRYPTION_KEY = {ApplicationName}) NOT NULL
+                    ALTER TABLE Patients ADD FirstName varchar(255) ENCRYPTED WITH (ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', COLUMN_ENCRYPTION_KEY = {ApplicationName}) NOT NULL
+                    ALTER TABLE Patients ADD LastName varchar(255) ENCRYPTED WITH (ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', COLUMN_ENCRYPTION_KEY = {ApplicationName}) NOT NULL";
         }
 
         public void CreateMasterKey()
