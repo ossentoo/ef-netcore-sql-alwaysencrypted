@@ -32,6 +32,9 @@ namespace EfSqlEncrypted.Migrations
                     b.Property<string>("LastName")
                         .HasColumnType("nvarchar(max)");
 
+                    b.Property<string>("Email")
+                        .HasColumnType("varchar(255)");
+
                     b.Property<string>("SSN")
                         .HasColumnType("nvarchar(max)");
 

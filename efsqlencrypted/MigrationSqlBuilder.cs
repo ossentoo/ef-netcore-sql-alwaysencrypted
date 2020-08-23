@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace EfSqlEncrypted
 {
@@ -19,9 +16,7 @@ namespace EfSqlEncrypted
         private readonly string _keyVaultKeyVersion;
         private readonly string _connectionString;
         private const string ApplicationName = "patients";
-        private readonly string _clientId;
-        private readonly string _clientSecret;
-
+        
         private const string CreateColumnEncryptionKeyTemplate = @" 
             CREATE COLUMN ENCRYPTION KEY [{0}] 
             WITH VALUES 
@@ -42,9 +37,6 @@ namespace EfSqlEncrypted
                 .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
                 .Build();
 
-
-            _clientId = configuration["Authentication:ClientId"];
-            _clientSecret = configuration["Authentication:ClientSecret"];
             _connectionString = configuration["DbConnectionString"];
 
             _keyVaultName = configuration["KeyVault:Name"];

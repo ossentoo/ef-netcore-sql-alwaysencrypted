@@ -14,6 +14,8 @@ namespace unit.tests
 {
     public class EfSqlEncryptionShould
     {
+        private const string Ssn = "SSN-989879311";
+        private const string Email = "joe.bloggs@test.com";
         private readonly Patient _patient;
         private readonly string _connectionString;
 
@@ -26,7 +28,8 @@ namespace unit.tests
             Initialize();
             _patient = new Patient
             {
-                SSN = "SSN-989879311",
+                Email = Email,
+                SSN = Ssn,
                 FirstName = "Joe",
                 LastName = "Bloggs",
                 BirthDate = new DateTime(1970, 01, 01)
@@ -83,7 +86,7 @@ namespace unit.tests
         {
             using var db = new EfContext();
 
-            var entity = db.Find<Patient>(1);
+            var entity = db.Patients.FirstOrDefault(x=>x.Email == Email);
 
             if (entity == null)
             {
@@ -97,7 +100,7 @@ namespace unit.tests
         {
             SqlProviderBuilder.InitializeAzureKeyVaultProvider();
             var sqlConnection = new SqlConnection(_connectionString);
-            string insertSql = "INSERT INTO [Patients] (SSN, FirstName, LastName, BirthDate) VALUES (@SSN, @FirstName, @LastName, @BirthDate);";
+            string insertSql = "INSERT INTO [Patients] (Email, SSN, FirstName, LastName, BirthDate) VALUES (@Email, @SSN, @FirstName, @LastName, @BirthDate);";
 
             sqlConnection.Open();
             using var sqlTransaction = sqlConnection.BeginTransaction();
@@ -105,6 +108,7 @@ namespace unit.tests
                 connection: sqlConnection, transaction: sqlTransaction,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
 
+            sqlCommand.Parameters.AddWithValue(@"Email", _patient.Email);
             sqlCommand.Parameters.AddWithValue(@"SSN", _patient.SSN);
             sqlCommand.Parameters.AddWithValue(@"FirstName", _patient.FirstName);
             sqlCommand.Parameters.AddWithValue(@"LastName", _patient.LastName);
