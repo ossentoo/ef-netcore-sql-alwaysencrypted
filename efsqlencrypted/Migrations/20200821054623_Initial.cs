@@ -16,9 +16,10 @@ namespace EfSqlEncrypted.Migrations
                 {
                     PatientId = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
-                    SSN = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    FirstName = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    LastName = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Email = table.Column<string>(type: "varchar(max)", nullable: false),
+                    SSN = table.Column<string>(type: "varchar(max)", nullable: false),
+                    FirstName = table.Column<string>(type: "varchar(max)", nullable: true),
+                    LastName = table.Column<string>(type: "varchar(max)", nullable: true),
                     BirthDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>

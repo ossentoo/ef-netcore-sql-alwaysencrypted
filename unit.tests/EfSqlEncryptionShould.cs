@@ -1,5 +1,5 @@
 ﻿using System;
-using System.Diagnostics;
+using System.Data;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -14,6 +14,8 @@ namespace unit.tests
 {
     public class EfSqlEncryptionShould
     {
+        private const string Ssn = "SSN-989879311";
+        private const string Email = "joe.bloggs@test.com";
         private readonly Patient _patient;
         private readonly string _connectionString;
 
@@ -26,36 +28,47 @@ namespace unit.tests
             Initialize();
             _patient = new Patient
             {
-                SSN = "SSN-989879311",
+                Email = Email,
+                SSN = Ssn,
                 FirstName = "Joe",
                 LastName = "Bloggs",
                 BirthDate = new DateTime(1970, 01, 01)
             };
-        }
 
-        [Fact]
-        public void ApplyDataMigration()
-        {
             using var db = new EfContext();
             db.Database.Migrate();
-            AddDataWithEf();
         }
 
         [Fact]
-        public async  Task DecryptData()
+        public void ApplyMigrationWithAndAddData()
+        {
+            using var db = new EfContext();
+            AddDataWithSql();
+
+            var entity = db.Patients.First(x => x.Email == Email);
+             
+            Assert.Equal(Email, entity.Email);
+            Assert.Equal(Ssn, entity.SSN);
+
+        }
+
+        [Fact]
+        public async  Task AddUpdateAndDecryptData()
         {
             await using var db = new EfContext();
 
             AddDataWithEf();
 
-            var results = await db.Patients.ToListAsync();
+            var entity = await db.Patients.FirstAsync();
+            entity.BirthDate = DateTime.UtcNow.AddYears(-40);
+            await db.SaveChangesAsync();
 
-            foreach (var r in results)
-            {
-                Debug.WriteLine(r.SSN);
-            }
+            var entityUpdated = await db.Patients.FirstAsync();
 
-            Assert.True(results.Any());
+            Assert.True(entityUpdated.BirthDate < DateTime.UtcNow);
+
+            Assert.Equal(Email, entity.Email);
+            Assert.Equal(Ssn, entity.SSN);
         }
 
         private void Initialize()
@@ -83,34 +96,44 @@ namespace unit.tests
         {
             using var db = new EfContext();
 
-            var entity = db.Find<Patient>(1);
+            var entity = db.Patients.FirstOrDefault(x=>x.Email == Email);
 
-            if (entity == null)
+            if (entity != null)
             {
-                AddDataWithSql();
-                // db.Patients.Add(_patient);
-                // db.SaveChanges();
+                db.Patients.Remove(entity);
+                db.SaveChanges();
             }
+
+            db.Patients.Add(_patient);
+            db.SaveChanges();
+
         }
-        
+
         private void AddDataWithSql()
         {
             SqlProviderBuilder.InitializeAzureKeyVaultProvider();
             var sqlConnection = new SqlConnection(_connectionString);
-            string insertSql = "INSERT INTO [Patients] (SSN, FirstName, LastName, BirthDate) VALUES (@SSN, @FirstName, @LastName, @BirthDate);";
+            string insertSql = "INSERT INTO [Patients] (Email, SSN, FirstName, LastName, BirthDate) VALUES (@Email, @SSN, @FirstName, @LastName, @BirthDate);";
 
             sqlConnection.Open();
             using var sqlTransaction = sqlConnection.BeginTransaction();
-            using var sqlCommand = new SqlCommand(insertSql,
+            using var command = new SqlCommand(insertSql,
                 connection: sqlConnection, transaction: sqlTransaction,
                 columnEncryptionSetting: SqlCommandColumnEncryptionSetting.Enabled);
 
-            sqlCommand.Parameters.AddWithValue(@"SSN", _patient.SSN);
-            sqlCommand.Parameters.AddWithValue(@"FirstName", _patient.FirstName);
-            sqlCommand.Parameters.AddWithValue(@"LastName", _patient.LastName);
-            sqlCommand.Parameters.AddWithValue(@"BirthDate", DateTime.UtcNow);
+            command.Parameters.Add("@Email", SqlDbType.VarChar);
+            command.Parameters.Add("@SSN", SqlDbType.VarChar);
+            command.Parameters.Add("@FirstName", SqlDbType.VarChar);
+            command.Parameters.Add("@LastName", SqlDbType.VarChar);
+            command.Parameters.Add("@BirthDate", SqlDbType.DateTime);
 
-            sqlCommand.ExecuteNonQuery();
+            command.Parameters["@Email"].Value = _patient.Email;
+            command.Parameters["@SSN"].Value = _patient.SSN;
+            command.Parameters["@FirstName"].Value = _patient.FirstName;
+            command.Parameters["@LastName"].Value = _patient.LastName;
+            command.Parameters["@BirthDate"].Value = DateTime.UtcNow;
+
+            command.ExecuteNonQuery();
             sqlTransaction.Commit();
         }
     }

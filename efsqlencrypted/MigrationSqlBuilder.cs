@@ -1,14 +1,11 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Data.SqlClient;
 using Microsoft.Data.SqlClient.AlwaysEncrypted.AzureKeyVaultProvider;
 using Microsoft.Extensions.Configuration;
-using Microsoft.IdentityModel.Clients.ActiveDirectory;
 
 namespace EfSqlEncrypted
 {
@@ -19,9 +16,7 @@ namespace EfSqlEncrypted
         private readonly string _keyVaultKeyVersion;
         private readonly string _connectionString;
         private const string ApplicationName = "patients";
-        private readonly string _clientId;
-        private readonly string _clientSecret;
-
+        
         private const string CreateColumnEncryptionKeyTemplate = @" 
             CREATE COLUMN ENCRYPTION KEY [{0}] 
             WITH VALUES 
@@ -42,9 +37,6 @@ namespace EfSqlEncrypted
                 .AddJsonFile($"appsettings.{Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT")}.json", optional: true)
                 .Build();
 
-
-            _clientId = configuration["Authentication:ClientId"];
-            _clientSecret = configuration["Authentication:ClientSecret"];
             _connectionString = configuration["DbConnectionString"];
 
             _keyVaultName = configuration["KeyVault:Name"];
@@ -63,9 +55,9 @@ namespace EfSqlEncrypted
                             COLUMN IF EXISTS LastName,
                             COLUMN IF EXISTS SSN; 
 
-                    ALTER TABLE Patients ADD SSN nvarchar(20) NOT NULL
-                    ALTER TABLE Patients ADD FirstName nvarchar(255) NOT NULL
-                    ALTER TABLE Patients ADD LastName nvarchar(255) NOT NULL";
+                    ALTER TABLE Patients ADD SSN varchar(20) NOT NULL
+                    ALTER TABLE Patients ADD FirstName varchar(255) NOT NULL
+                    ALTER TABLE Patients ADD LastName varchar(255) NOT NULL";
         }
 
         public string PatientsEncryptionAdd()
@@ -77,9 +69,9 @@ namespace EfSqlEncrypted
                             COLUMN IF EXISTS LastName,
                             COLUMN IF EXISTS SSN; 
 
-                    ALTER TABLE Patients ADD SSN nvarchar(20) ENCRYPTED WITH (ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', COLUMN_ENCRYPTION_KEY = {ApplicationName}) NOT NULL
-                    ALTER TABLE Patients ADD FirstName nvarchar(255) ENCRYPTED WITH (ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', COLUMN_ENCRYPTION_KEY = {ApplicationName}) NOT NULL
-                    ALTER TABLE Patients ADD LastName nvarchar(255) ENCRYPTED WITH (ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', COLUMN_ENCRYPTION_KEY = {ApplicationName}) NOT NULL";
+                    ALTER TABLE Patients ADD SSN varchar(20) ENCRYPTED WITH (ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', COLUMN_ENCRYPTION_KEY = {ApplicationName}) NOT NULL
+                    ALTER TABLE Patients ADD FirstName varchar(255) ENCRYPTED WITH (ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', COLUMN_ENCRYPTION_KEY = {ApplicationName}) NOT NULL
+                    ALTER TABLE Patients ADD LastName varchar(255) ENCRYPTED WITH (ENCRYPTION_TYPE = RANDOMIZED, ALGORITHM = 'AEAD_AES_256_CBC_HMAC_SHA_256', COLUMN_ENCRYPTION_KEY = {ApplicationName}) NOT NULL";
         }
 
         public void CreateMasterKey()
